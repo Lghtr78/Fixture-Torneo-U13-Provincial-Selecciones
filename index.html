@@ -321,16 +321,17 @@
 
     <script type="module">
         // Import Firebase functions directly within the script block that uses 'module' type
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // NOTE: Firebase imports and configuration have been removed for the static GitHub Pages deployment.
+        // The original implementation relied on Firebase for authentication and persistence, which does not work
+        // when the page is served statically without injecting configuration variables.  To keep the fixture
+        // functional on GitHub Pages, we will store all data in the browser's localStorage instead.
 
-        // Global variables for Firebase and Firestore instances
+        // Dummy variables retained for backward compatibility (unused).
         let firebaseApp = null;
         let db = null;
         let auth = null;
         let currentUserId = null;
-        let fixtureDocRef = null; // Defined here, assigned in onAuthStateChanged
+        let fixtureDocRef = null;
 
         // Data structure to hold team information for each group
         const teams = {
@@ -421,114 +422,57 @@
         };
 
 
-        // --- Firebase Initialization and Data Handling ---
-        document.addEventListener('DOMContentLoaded', async () => {
+        // --- Local initialization and data handling ---
+        document.addEventListener('DOMContentLoaded', () => {
             const loadingOverlay = document.getElementById('loadingOverlay');
-            loadingOverlay.style.display = 'flex'; // Show loading indicator
+            // Hide the loading overlay immediately for static deployments.
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
 
             // Attach event listener to the report button
-            document.getElementById('generateReportBtn').addEventListener('click', window.generateVisualReport);
+            const reportBtn = document.getElementById('generateReportBtn');
+            if (reportBtn) reportBtn.addEventListener('click', window.generateVisualReport);
 
-            try {
-                // Initialize Firebase
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-                firebaseApp = initializeApp(firebaseConfig);
-                db = getFirestore(firebaseApp);
-                auth = getAuth(firebaseApp);
-
-                // Authenticate user
-                // CORRECTED TYPO: __initialAuthToken -> __initial_auth_token
-                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
+            // Assign input elements to groupMatches so that updateGroupStandings can read values
+            document.querySelectorAll('.score-input[data-match]').forEach(input => {
+                const matchId = input.dataset.match;
+                const teamIndex = parseInt(input.dataset.teamIndex);
+                let groupName = '';
+                let matchIdx = -1;
+                if (matchId.startsWith('ZN')) {
+                    groupName = 'ZonaNorte';
+                    matchIdx = parseInt(matchId.replace('ZN', '')) - 1;
+                } else if (matchId.startsWith('ZS')) {
+                    groupName = 'ZonaSur';
+                    matchIdx = parseInt(matchId.replace('ZS', '')) - 1;
                 }
+                if (groupName && matchIdx !== -1) {
+                    groupMatches[groupName][matchIdx].inputs[teamIndex] = input;
+                }
+            });
 
-                // Listen for auth state changes to get the user ID
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        currentUserId = user.uid;
-                        document.getElementById('userIdDisplay').textContent = `ID de Usuario: ${currentUserId}`; // Display user ID
-                        // Define Firestore document path for PRIVATE data
-                        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                        const tournamentId = 'torneoU13LaPlata2025'; // A fixed ID for this specific tournament fixture
-                        // CHANGE: Data is now stored per user
-                        fixtureDocRef = doc(collection(db, `artifacts/${appId}/users/${currentUserId}/torneos`), tournamentId);
-
-                        // Set up real-time listener for fixture data
-                        onSnapshot(fixtureDocRef, (docSnap) => {
-                            if (docSnap.exists()) {
-                                const data = docSnap.data();
-                                loadFixtureData(data); // Function to load data into UI
-                            } else {
-                                console.log("No existing fixture data for this user. Initializing new fixture.");
-                                saveFixtureData(true); // Save initial empty state if no data exists
-                            }
-                            loadingOverlay.style.display = 'none'; // Hide loading indicator once data is loaded
-                        }, (error) => {
-                            console.error("Error listening to Firestore data:", error);
-                            loadingOverlay.style.display = 'none'; // Hide loading indicator on error
-                        });
-
-                    } else {
-                        console.log("No user is signed in.");
-                        document.getElementById('userIdDisplay').textContent = 'Inicia sesión para guardar tu progreso.';
-                        loadingOverlay.style.display = 'none'; // Hide loading indicator if no user
-                    }
-                });
-
-                // Populate groupMatches.inputs with references to the score input fields
-                document.querySelectorAll('.score-input[data-match]').forEach(input => {
-                    const matchId = input.dataset.match;
-                    const teamIndex = parseInt(input.dataset.teamIndex);
-                    let groupName = '';
-                    let matchIdx = -1;
-
-                    if (matchId.startsWith('ZN')) {
-                        groupName = 'ZonaNorte';
-                        matchIdx = parseInt(matchId.replace('ZN', '')) - 1;
-                    } else if (matchId.startsWith('ZS')) {
-                        groupName = 'ZonaSur';
-                        matchIdx = parseInt(matchId.replace('ZS', '')) - 1;
-                    }
-
-                    if (groupName && matchIdx !== -1) {
-                        groupMatches[groupName][matchIdx].inputs[teamIndex] = input;
-                    }
-                });
-
-            } catch (error) {
-                console.error("Error initializing Firebase or authenticating:", error);
-                loadingOverlay.style.display = 'none'; // Hide loading indicator on critical error
+            // Restore saved state from localStorage if available
+            try {
+                const savedData = localStorage.getItem('fixtureData');
+                if (savedData) {
+                    const parsed = JSON.parse(savedData);
+                    loadFixtureData(parsed);
+                }
+            } catch (e) {
+                console.error("Error loading fixture data from localStorage:", e);
             }
         });
 
-        // Function to save fixture data to Firestore
-        const saveFixtureData = async (initialSave = false) => {
-            if (!fixtureDocRef) {
-                console.warn("Firestore document reference not available. Cannot save data.");
-                return;
-            }
-
+        // Function to save fixture data to localStorage
+        const saveFixtureData = (initialSave = false) => {
             // Get current state of group matches and teams
             const dataToSave = {
                 groupMatches: JSON.parse(JSON.stringify(groupMatches)), // Deep copy to avoid reference issues
                 teams: JSON.parse(JSON.stringify(teams)) // Deep copy
             };
-
             try {
-                // Use setDoc for initial save, and setDoc with merge:true for updates
-                if (initialSave) {
-                    await setDoc(fixtureDocRef, dataToSave);
-                    console.log("Initial fixture data saved successfully!");
-                } else {
-                    await setDoc(fixtureDocRef, dataToSave, { merge: true });
-                    // console.log("Fixture data updated successfully!"); // Log only for debugging
-                }
+                localStorage.setItem('fixtureData', JSON.stringify(dataToSave));
             } catch (e) {
-                console.error("Error saving fixture data:", e);
+                console.error("Error saving fixture data to localStorage:", e);
             }
         };
 
@@ -771,5 +715,4 @@
         }
     </script>
 </body>
-
 </html>
