@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixture Torneo U13 La Plata 2025</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- html2canvas CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray fallback background */
+            /* Background image and overlay */
+            background-image: url('https://lh3.googleusercontent.com/u/0/d/1X50p72lCgI_E2cK7D7Q3Y9Q3p4x_6xM'); /* Your collage image URL */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* Makes the background fixed while scrolling */
+            position: relative; /* Needed for the overlay */
+        }
+        /* Overlay for readability and color harmony */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(31, 70, 91, 0.85); /* #1F465B with 85% opacity */
+            z-index: -1; /* Place behind content */
+        }
+
+        .card {
+            background-color: rgba(255, 255, 255, 0.95); /* Slightly transparent white for content cards */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+            padding: 1.5rem; /* p-6 */
+        }
+        .header-bg {
+            background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%); /* Blue gradient from previous design */
+        }
+        .team-input {
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            border-radius: 0.375rem; /* rounded-md */
+            padding: 0.5rem 0.75rem; /* px-3 py-2 */
+            width: 120px; /* Adjusted width for team inputs */
+            background-color: #f9fafb; /* gray-50 */
+            color: #374151; /* text-gray-700 */
+            font-weight: 600; /* semi-bold */
+            text-align: center;
+        }
+        .score-input {
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            width: 70px; /* Increased width for score inputs */
+            text-align: center;
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+        /* Custom styles for disabled inputs to look distinct */
+        .team-input:disabled, .score-input:disabled {
+            background-color: #e2e8f0; /* bg-gray-200 */
+            color: #64748b; /* text-gray-500 */
+            cursor: not-allowed;
+        }
+
+        /* Ensure text and other elements are above the overlay */
+        header, main {
+            position: relative;
+            z-index: 1;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            z-index: 1000;
+            display: none; /* Hidden by default */
+        }
+        .report-button {
+            background-color: #28a745; /* Green */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+            margin-top: 1.5rem;
+        }
+        .report-button:hover {
+            background-color: #218838; /* Darker green */
+        }
+
+        /* Responsive adjustments for team inputs */
+        @media (min-width: 768px) { /* md breakpoint */
+            .md\\:w-2\\/5-custom { /* Custom class for specific width */
+                width: 40%; /* Approx. 2/5 of parent, but with fixed pixel minimum for mobile */
+                max-width: 150px; /* To prevent too wide on larger screens */
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-8 px-4">
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        Cargando fixture...
+    </div>
+
+    <!-- Header Section -->
+    <header class="w-full max-w-4xl header-bg text-white p-6 rounded-xl shadow-lg mb-8 text-center">
+        <h1 class="text-3xl font-bold mb-2">TORNEO PROVINCIAL U13 MASCULINO</h1>
+        <h2 class="text-xl font-semibold">LA PLATA 2025</h2>
+        <p class="text-sm">Programación de Partidos</p>
+        <p class="text-xs mt-2 italic">Ingresa los resultados para que el fixture se actualice automáticamente.</p>
+        <p class="text-xs mt-2 text-gray-200" id="userIdDisplay"></p>
+        <button id="generateReportBtn" class="report-button">Generar Reporte Visual</button>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8" id="fixtureContent">
+
+        <!-- Grupo A: Zona Norte -->
+        <section class="card">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Fase de Grupos: Zona Norte</h3>
+            <div class="space-y-4">
+                <div class="flex flex-col mb-4">
+                    <p class="font-semibold text-gray-700 mb-2">Equipos:</p>
+                    <ul class="list-disc list-inside text-gray-600" id="zonaNorteTeamsList">
+                        <li>La Plata</li>
+                        <li>Chivilcoy</li>
+                        <li>Junín</li>
+                    </ul>
+                </div>
+
+                <h4 class="font-semibold text-gray-700 mb-2">Partidos:</h4>
+                <!-- Match 1 -->
+                <div class="border-b pb-4 mb-4">
+                    <p class="text-sm text-gray-500">14/08 - 18:30 | Club Platense</p>
+                    <div class="flex items-center justify-between text-lg font-medium text-gray-800 mt-1">
+                        <span data-team="La Plata">La Plata</span>
+                        <input type="number" class="score-input" placeholder="0" data-match="ZN1" data-team-index="0" oninput="updateGroupStandingsAndSave('ZonaNorte')">
+                        <span>vs</span>
+                        <input type="number" class="score-input" placeholder="0" data-match="ZN1" data-team-index="1" oninput="updateGroupStandingsAndSave('ZonaNorte')">
+                        <span data-team="Chivilcoy">Chivilcoy</span>
+                    </div>
+                </div>
+                <!-- Match 2 -->
+                <div class="border-b pb-4 mb-4">
+                    <p class="text-sm text-gray-500">15/08 - 15:30 | Club Platense</p>
+                    <div class="flex items-center justify-between text-lg font-medium text-gray-800 mt-1">
+                        <span data-team="Junín">Junín</span>
+                        <input type="number" class="score-input" placeholder="0" data-match="ZN2" data-team-index="0" oninput="updateGroupStandingsAndSave('ZonaNorte')">
+                        <span>vs</span>
+                        <input type="number" class="score-input" placeholder="0" data-match="ZN2" data-team-index="1" oninput="updateGroupStandingsAndSave('ZonaNorte')">
+                        <span data-team="Chivilcoy">Chivilcoy</span>
+                    </div>
+                </div>
+                <!-- Match 3 -->
+                <div class="border-b pb-4 mb-4">
+                    <p class="text-sm text-gray-500">15/08 - 18:30 | Club Platense</p>
+                    <div class="flex items-center justify-between text-lg font-medium text-gray-800 mt-1">
+                        <span data-team="La Plata">La Plata</span>
+                        <input type="number" class="score-input" placeholder="0" data-match="ZN3" data-team-index="0" oninput="updateGroupStandingsAndSave('ZonaNorte')">
+                        <span>vs</span>
+                        <input type="number" class="score-input" placeholder="0" data-match="ZN3" data-team-index="1" oninput="updateGroupStandingsAndSave('ZonaNorte')">
+                        <span data-team="Junín">Junín</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Grupo B: Zona Sur -->
+        <section class="card">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Fase de Grupos: Zona Sur</h3>
+            <div class="space-y-4">
+                <div class="flex flex-col mb-4">
+                    <p class="font-semibold text-gray-700 mb-2">Equipos:</p>
+                    <ul class="list-disc list-inside text-gray-600" id="zonaSurTeamsList">
+                        <li>Mar del Plata</li>
+                        <li>Bahía Blanca</li>
+                        <li>Olavarría</li>
+                    </ul>
+                </div>
+
+                <h4 class="font-semibold text-gray-700 mb-2">Partidos:</h4>
+                <!-- Match 1 -->
+                <div class="border-b pb-4 mb-4">
+                    <p class="text-sm text-gray-500">14/08 - 18:30 | Club Universal</p>
+                    <div class="flex items-center justify-between text-lg font-medium text-gray-800 mt-1">
+                        <span data-team="Mar del Plata">Mar del Plata</span>
+                        <input type="number" class="score-input" placeholder="0" data-match="ZS1" data-team-index="0" oninput="updateGroupStandingsAndSave('ZonaSur')">
+                        <span>vs</span>
+                        <input type="number" class="score-input" placeholder="0" data-match="ZS1" data-team-index="1" oninput="updateGroupStandingsAndSave('ZonaSur')">
+                        <span data-team="Olavarría">Olavarría</span>
+                    </div>
+                </div>
+                <!-- Match 2 -->
+                <div class="border-b pb-4 mb-4">
+                    <p class="text-sm text-gray-500">15/08 - 10:00 | Club Universal</p>
+                    <div class="flex items-center justify-between text-lg font-medium text-gray-800 mt-1">
+                        <span data-team="Bahía Blanca">Bahía Blanca</span>
+                        <input type="number" class="score-input" placeholder="0" data-match="ZS2" data-team-index="0" oninput="updateGroupStandingsAndSave('ZonaSur')">
+                        <span>vs</span>
+                        <input type="number" class="score-input" placeholder="0" data-match="ZS2" data-team-index="1" oninput="updateGroupStandingsAndSave('ZonaSur')">
+                        <span data-team="Olavarría">Olavarría</span>
+                    </div>
+                </div>
+                <!-- Match 3 -->
+                <div class="border-b pb-4 mb-4">
+                    <p class="text-sm text-gray-500">15/08 - 18:30 | Club Universal</p>
+                    <div class="flex items-center justify-between text-lg font-medium text-gray-800 mt-1">
+                        <span data-team="Bahía Blanca">Bahía Blanca</span>
+                        <input type="number" class="score-input" placeholder="0" data-match="ZS3" data-team-index="0" oninput="updateGroupStandingsAndSave('ZonaSur')">
+                        <span>vs</span>
+                        <input type="number" class="score-input" placeholder="0" data-match="ZS3" data-team-index="1" oninput="updateGroupStandingsAndSave('ZonaSur')">
+                        <span data-team="Mar del Plata">Mar del Plata</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fase Final Section -->
+        <section class="card md:col-span-2">
+            <h3 class="text-xl font-bold text-gray-800 mb-6 text-center">Fase Final</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Reubicación 5° y 6° puesto -->
+                <div class="flex flex-col items-center p-4 border border-gray-200 rounded-lg bg-blue-50">
+                    <h4 class="text-md font-semibold text-gray-800 mb-2 text-center">Reubicación 5° y 6° puesto</h4>
+                    <p class="text-sm text-gray-500">16/08 - 19:30 | Club Reconquista</p>
+                    <div class="flex items-center justify-center mt-2 text-base font-medium">
+                        <input type="text" class="team-input text-center mr-2 md:w-2/5-custom" id="team5th_1" placeholder="3° Zona Norte" disabled>
+                        <span class="font-bold">vs</span>
+                        <input type="text" class="team-input text-center ml-2 md:w-2/5-custom" id="team5th_2" placeholder="3° Zona Sur" disabled>
+                    </div>
+                    <div class="flex items-center justify-center mt-2 space-x-2">
+                        <input type="number" class="score-input" id="score5th_1" placeholder="0" oninput="updateKnockoutMatchAndSave('5th6th')">
+                        <span>-</span>
+                        <input type="number" class="score-input" id="score5th_2" placeholder="0" oninput="updateKnockoutMatchAndSave('5th6th')">
+                    </div>
+                </div>
+
+                <!-- Semifinal 1 -->
+                <div class="flex flex-col items-center p-4 border border-gray-200 rounded-lg bg-blue-50">
+                    <h4 class="text-md font-semibold text-gray-800 mb-2 text-center">Semifinal 1</h4>
+                    <p class="text-sm text-gray-500">16/08 - 19:30 | Club Platense</p>
+                    <div class="flex items-center justify-center mt-2 text-base font-medium">
+                        <input type="text" class="team-input text-center mr-2 md:w-2/5-custom" id="semifinal1_team1" placeholder="1° Zona Sur" disabled>
+                        <span class="font-bold">vs</span>
+                        <input type="text" class="team-input text-center ml-2 md:w-2/5-custom" id="semifinal1_team2" placeholder="2° Zona Norte" disabled>
+                    </div>
+                    <div class="flex items-center justify-center mt-2 space-x-2">
+                        <input type="number" class="score-input" id="semifinal1_score1" placeholder="0" oninput="updateKnockoutMatchAndSave('semifinal1')">
+                        <span>-</span>
+                        <input type="number" class="score-input" id="semifinal1_score2" placeholder="0" oninput="updateKnockoutMatchAndSave('semifinal1')">
+                    </div>
+                </div>
+
+                <!-- Semifinal 2 -->
+                <div class="flex flex-col items-center p-4 border border-gray-200 rounded-lg bg-blue-50">
+                    <h4 class="text-md font-semibold text-gray-800 mb-2 text-center">Semifinal 2</h4>
+                    <p class="text-sm text-gray-500">16/08 - 19:30 | Club Universal</p>
+                    <div class="flex items-center justify-center mt-2 text-base font-medium">
+                        <input type="text" class="team-input text-center mr-2 md:w-2/5-custom" id="semifinal2_team1" placeholder="1° Zona Norte" disabled>
+                        <span class="font-bold">vs</span>
+                        <input type="text" class="team-input text-center ml-2 md:w-2/5-custom" id="semifinal2_team2" placeholder="2° Zona Sur" disabled>
+                    </div>
+                    <div class="flex items-center justify-center mt-2 space-x-2">
+                        <input type="number" class="score-input" id="semifinal2_score1" placeholder="0" oninput="updateKnockoutMatchAndSave('semifinal2')">
+                        <span>-</span>
+                        <input type="number" class="score-input" id="semifinal2_score2" placeholder="0" oninput="updateKnockoutMatchAndSave('semifinal2')">
+                    </div>
+                </div>
+
+                <!-- Reubicación 3° y 4° puesto -->
+                <div class="flex flex-col items-center p-4 border border-gray-200 rounded-lg bg-green-50">
+                    <h4 class="text-md font-semibold text-gray-800 mb-2 text-center">Reubicación 3° y 4° puesto</h4>
+                    <p class="text-sm text-gray-500">17/08 - 10:30 | Club Platense</p>
+                    <div class="flex items-center justify-center mt-2 text-base font-medium">
+                        <input type="text" class="team-input text-center mr-2 md:w-2/5-custom" id="thirdPlace_team1" placeholder="Perdedor SF1" disabled>
+                        <span class="font-bold">vs</span>
+                        <input type="text" class="team-input text-center ml-2 md:w-2/5-custom" id="thirdPlace_team2" placeholder="Perdedor SF2" disabled>
+                    </div>
+                    <div class="flex items-center justify-center mt-2 space-x-2">
+                        <input type="number" class="score-input" placeholder="0">
+                        <span>-</span>
+                        <input type="number" class="score-input" placeholder="0">
+                    </div>
+                </div>
+
+                <!-- Final -->
+                <div class="flex flex-col items-center p-4 border border-gray-200 rounded-lg bg-yellow-50 lg:col-span-2">
+                    <h4 class="text-md font-semibold text-gray-800 mb-2 text-center">FINAL</h4>
+                    <p class="text-sm text-gray-500">17/08 - 12:30 | Club Platense</p>
+                    <div class="flex items-center justify-center mt-2 text-base font-medium">
+                        <input type="text" class="team-input text-center mr-2 md:w-2/5-custom" id="final_team1" placeholder="Ganador SF1" disabled>
+                        <span class="font-bold">vs</span>
+                        <input type="text" class="team-input text-center ml-2 md:w-2/5-custom" id="final_team2" placeholder="Ganador SF2" disabled>
+                    </div>
+                    <div class="flex items-center justify-center mt-2 space-x-2">
+                        <input type="number" class="score-input" placeholder="0">
+                        <span>-</span>
+                        <input type="number" class="score-input" placeholder="0">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script type="module">
+        // Import Firebase functions directly within the script block that uses 'module' type
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase and Firestore instances
+        let firebaseApp = null;
+        let db = null;
+        let auth = null;
+        let currentUserId = null;
+        let fixtureDocRef = null; // Defined here, assigned in onAuthStateChanged
+
+        // Data structure to hold team information for each group
+        const teams = {
+            ZonaNorte: [
+                { name: 'La Plata', wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, pointDifference: 0 },
+                { name: 'Chivilcoy', wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, pointDifference: 0 },
+                { name: 'Junín', wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, pointDifference: 0 }
+            ],
+            ZonaSur: [
+                { name: 'Mar del Plata', wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, pointDifference: 0 },
+                { name: 'Bahía Blanca', wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, pointDifference: 0 },
+                { name: 'Olavarría', wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, pointDifference: 0 }
+            ]
+        };
+
+        // Define group stage matches to easily retrieve teams and scores
+        const groupMatches = {
+            ZonaNorte: [
+                { teams: ['La Plata', 'Chivilcoy'], inputs: [], score1: null, score2: null }, // ZN1
+                { teams: ['Junín', 'Chivilcoy'], inputs: [], score1: null, score2: null },    // ZN2
+                { teams: ['La Plata', 'Junín'], inputs: [], score1: null, score2: null }     // ZN3
+            ],
+            ZonaSur: [
+                { teams: ['Mar del Plata', 'Olavarría'], inputs: [], score1: null, score2: null }, // ZS1
+                { teams: ['Bahía Blanca', 'Olavarría'], inputs: [], score1: null, score2: null },  // ZS2
+                { teams: ['Bahía Blanca', 'Mar del Plata'], inputs: [], score1: null, score2: null } // ZS3
+            ]
+        };
+
+        // --- Functions that need to be globally accessible ---
+        window.updateGroupStandingsAndSave = (groupName) => {
+            updateGroupStandings(groupName);
+            saveFixtureData();
+        };
+
+        window.updateKnockoutMatchAndSave = (matchId) => {
+            updateKnockoutMatch(matchId);
+            saveFixtureData();
+        };
+
+        window.generateVisualReport = async () => {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex'; // Show loading indicator
+            loadingOverlay.textContent = 'Generando reporte...';
+
+            try {
+                // Temporarily hide elements that shouldn't be in the screenshot (like the button itself)
+                const reportButton = document.getElementById('generateReportBtn');
+                if (reportButton) reportButton.style.display = 'none';
+                const userIdDisplay = document.getElementById('userIdDisplay');
+                if (userIdDisplay) userIdDisplay.style.display = 'none';
+
+                // Get the main content element to capture
+                const fixtureContent = document.getElementById('fixtureContent');
+
+                // Use html2canvas to capture the element
+                const canvas = await html2canvas(fixtureContent, {
+                    scale: 2, // Increase scale for better resolution
+                    logging: false, // Disable logging for cleaner console
+                    useCORS: true, // Important if background images are from external domains
+                    allowTaint: true, // Allow tainting for external images if necessary
+                    backgroundColor: null // Transparent background to keep body background
+                });
+
+                // Get image data URL
+                const imageDataUrl = canvas.toDataURL('image/png');
+
+                // Create a temporary link to download the image
+                const link = document.createElement('a');
+                link.href = imageDataUrl;
+                link.download = 'fixture_report.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Re-display hidden elements
+                if (reportButton) reportButton.style.display = 'block';
+                if (userIdDisplay) userIdDisplay.style.display = 'block';
+
+                loadingOverlay.style.display = 'none';
+                loadingOverlay.textContent = 'Cargando fixture...'; // Reset text
+            } catch (error) {
+                console.error("Error generating visual report:", error);
+                loadingOverlay.style.display = 'none';
+                loadingOverlay.textContent = 'Cargando fixture...'; // Reset text
+                alert('Hubo un error al generar el reporte visual. Por favor, inténtalo de nuevo.'); // Use alert only for user feedback on error
+            }
+        };
+
+
+        // --- Firebase Initialization and Data Handling ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex'; // Show loading indicator
+
+            // Attach event listener to the report button
+            document.getElementById('generateReportBtn').addEventListener('click', window.generateVisualReport);
+
+            try {
+                // Initialize Firebase
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+                firebaseApp = initializeApp(firebaseConfig);
+                db = getFirestore(firebaseApp);
+                auth = getAuth(firebaseApp);
+
+                // Authenticate user
+                // CORRECTED TYPO: __initialAuthToken -> __initial_auth_token
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Listen for auth state changes to get the user ID
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        document.getElementById('userIdDisplay').textContent = `ID de Usuario: ${currentUserId}`; // Display user ID
+                        // Define Firestore document path for PRIVATE data
+                        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                        const tournamentId = 'torneoU13LaPlata2025'; // A fixed ID for this specific tournament fixture
+                        // CHANGE: Data is now stored per user
+                        fixtureDocRef = doc(collection(db, `artifacts/${appId}/users/${currentUserId}/torneos`), tournamentId);
+
+                        // Set up real-time listener for fixture data
+                        onSnapshot(fixtureDocRef, (docSnap) => {
+                            if (docSnap.exists()) {
+                                const data = docSnap.data();
+                                loadFixtureData(data); // Function to load data into UI
+                            } else {
+                                console.log("No existing fixture data for this user. Initializing new fixture.");
+                                saveFixtureData(true); // Save initial empty state if no data exists
+                            }
+                            loadingOverlay.style.display = 'none'; // Hide loading indicator once data is loaded
+                        }, (error) => {
+                            console.error("Error listening to Firestore data:", error);
+                            loadingOverlay.style.display = 'none'; // Hide loading indicator on error
+                        });
+
+                    } else {
+                        console.log("No user is signed in.");
+                        document.getElementById('userIdDisplay').textContent = 'Inicia sesión para guardar tu progreso.';
+                        loadingOverlay.style.display = 'none'; // Hide loading indicator if no user
+                    }
+                });
+
+                // Populate groupMatches.inputs with references to the score input fields
+                document.querySelectorAll('.score-input[data-match]').forEach(input => {
+                    const matchId = input.dataset.match;
+                    const teamIndex = parseInt(input.dataset.teamIndex);
+                    let groupName = '';
+                    let matchIdx = -1;
+
+                    if (matchId.startsWith('ZN')) {
+                        groupName = 'ZonaNorte';
+                        matchIdx = parseInt(matchId.replace('ZN', '')) - 1;
+                    } else if (matchId.startsWith('ZS')) {
+                        groupName = 'ZonaSur';
+                        matchIdx = parseInt(matchId.replace('ZS', '')) - 1;
+                    }
+
+                    if (groupName && matchIdx !== -1) {
+                        groupMatches[groupName][matchIdx].inputs[teamIndex] = input;
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase or authenticating:", error);
+                loadingOverlay.style.display = 'none'; // Hide loading indicator on critical error
+            }
+        });
+
+        // Function to save fixture data to Firestore
+        const saveFixtureData = async (initialSave = false) => {
+            if (!fixtureDocRef) {
+                console.warn("Firestore document reference not available. Cannot save data.");
+                return;
+            }
+
+            // Get current state of group matches and teams
+            const dataToSave = {
+                groupMatches: JSON.parse(JSON.stringify(groupMatches)), // Deep copy to avoid reference issues
+                teams: JSON.parse(JSON.stringify(teams)) // Deep copy
+            };
+
+            try {
+                // Use setDoc for initial save, and setDoc with merge:true for updates
+                if (initialSave) {
+                    await setDoc(fixtureDocRef, dataToSave);
+                    console.log("Initial fixture data saved successfully!");
+                } else {
+                    await setDoc(fixtureDocRef, dataToSave, { merge: true });
+                    // console.log("Fixture data updated successfully!"); // Log only for debugging
+                }
+            } catch (e) {
+                console.error("Error saving fixture data:", e);
+            }
+        };
+
+        // Function to load fixture data from Firestore into the UI
+        const loadFixtureData = (data) => {
+            if (data.groupMatches && data.teams) {
+                // Restore groupMatches state
+                for (const groupName in data.groupMatches) {
+                    data.groupMatches[groupName].forEach((savedMatch, idx) => {
+                        const currentMatch = groupMatches[groupName][idx];
+                        if (currentMatch) {
+                            currentMatch.score1 = savedMatch.score1;
+                            currentMatch.score2 = savedMatch.score2;
+                            // Update input fields in UI
+                            if (currentMatch.inputs[0]) currentMatch.inputs[0].value = savedMatch.score1 !== null ? savedMatch.score1 : '';
+                            if (currentMatch.inputs[1]) currentMatch.inputs[1].value = savedMatch.score2 !== null ? savedMatch.score2 : '';
+                        }
+                    });
+                }
+
+                // Restore teams state
+                for (const groupName in data.teams) {
+                    data.teams[groupName].forEach((savedTeam, idx) => {
+                        const currentTeam = teams[groupName].find(t => t.name === savedTeam.name);
+                        if (currentTeam) {
+                            Object.assign(currentTeam, savedTeam); // Copy all properties
+                        }
+                    });
+                }
+                // After loading, update UI based on new loaded data
+                updateKnockoutParticipants();
+                // Need to re-run knockout match updates if scores were already present in loaded data
+                updateKnockoutMatch('semifinal1');
+                updateKnockoutMatch('semifinal2');
+                updateKnockoutMatch('5th6th'); // Re-evaluate 5th/6th place after loading
+            }
+        };
+
+        /**
+         * Updates the standings for a given group based on entered scores.
+         * @param {string} groupName - 'ZonaNorte' or 'ZonaSur'.
+         */
+        function updateGroupStandings(groupName) {
+            // Update scores in groupMatches object from input fields
+            groupMatches[groupName].forEach(match => {
+                match.score1 = parseInt(match.inputs[0].value);
+                match.score2 = parseInt(match.inputs[1].value);
+            });
+
+            // Reset stats for all teams in the group
+            teams[groupName].forEach(team => {
+                team.wins = 0;
+                team.losses = 0;
+                team.pointsFor = 0;
+                team.pointsAgainst = 0;
+                team.pointDifference = 0;
+            });
+
+            // Iterate through matches to calculate stats
+            groupMatches[groupName].forEach(match => {
+                const score1 = match.score1;
+                const score2 = match.score2;
+
+                // Ensure both scores are valid numbers
+                if (!isNaN(score1) && !isNaN(score2)) {
+                    const team1Name = match.teams[0];
+                    const team2Name = match.teams[1];
+
+                    const team1 = teams[groupName].find(t => t.name === team1Name);
+                    const team2 = teams[groupName].find(t => t.name === team2Name);
+
+                    if (!team1 || !team2) {
+                        console.error(`Teams not found for match: ${team1Name} vs ${team2Name}`);
+                        return;
+                    }
+
+                    // Update points for and against
+                    team1.pointsFor += score1;
+                    team1.pointsAgainst += score2;
+                    team2.pointsFor += score2;
+                    team2.pointsAgainst += score1;
+
+                    // Update wins and losses
+                    if (score1 > score2) {
+                        team1.wins++;
+                        team2.losses++;
+                    } else if (score2 > score1) {
+                        team2.wins++;
+                        team1.losses++;
+                    }
+                    // No ties in basketball, so no tie points logic needed for wins/losses.
+                }
+            });
+
+            // Calculate point difference after all matches are processed
+            teams[groupName].forEach(team => {
+                team.pointDifference = team.pointsFor - team.pointsAgainst;
+            });
+
+            // Sort teams based on wins first, then point difference, then head-to-head
+            teams[groupName].sort((a, b) => {
+                if (b.wins !== a.wins) {
+                    return b.wins - a.wins; // More wins first
+                }
+                if (b.pointDifference !== a.pointDifference) {
+                    return b.pointDifference - a.pointDifference; // Higher point difference if wins are equal
+                }
+                // If wins and point difference are equal, apply head-to-head rule
+                return getHeadToHeadWinner(groupName, a.name, b.name);
+            });
+            // Update knockout stage participants with ranked teams
+            updateKnockoutParticipants();
+        }
+
+        /**
+         * Determines the winner of a head-to-head match between two teams in a given group.
+         * Returns 1 if teamA should be ranked higher, -1 if teamB should be ranked higher, or 0 if no clear winner.
+         * @param {string} groupName - 'ZonaNorte' or 'ZonaSur'.
+         * @param {string} teamA - Name of the first team.
+         * @param {string} teamB - Name of the second team.
+         * @returns {number} - -1 if teamA should be ranked higher, 1 if teamB should be ranked higher, 0 if no clear winner or match not played.
+         */
+        function getHeadToHeadWinner(groupName, teamA, teamB) {
+            for (const match of groupMatches[groupName]) {
+                const score1 = match.score1;
+                const score2 = match.score2;
+
+                if (!isNaN(score1) && !isNaN(score2)) {
+                    // Check if this match involves teamA and teamB
+                    const isMatchA_B = (match.teams[0] === teamA && match.teams[1] === teamB);
+                    const isMatchB_A = (match.teams[0] === teamB && match.teams[1] === teamA);
+
+                    if (isMatchA_B || isMatchB_A) {
+                        if (isMatchA_B) {
+                            if (score1 > score2) return -1; // teamA won, so teamA ranks higher
+                            if (score2 > score1) return 1;  // teamB won, so teamB ranks higher
+                        } else { // isMatchB_A
+                            if (score1 > score2) return 1;  // teamB won (match.teams[0] was B), so teamA ranks lower
+                            if (score2 > score1) return -1; // teamA won (match.teams[1] was A), so teamA ranks higher
+                        }
+                    }
+                }
+            }
+            return 0; // No clear head-to-head winner or match not yet played/scores equal
+        }
+
+
+        /**
+         * Updates the participants in the knockout stage based on group standings.
+         */
+        function updateKnockoutParticipants() {
+            // Ensure both groups have at least 3 teams for ranking purposes
+            if (teams.ZonaNorte.length >= 3 && teams.ZonaSur.length >= 3) {
+                // Reubicación 5° y 6° puesto
+                document.getElementById('team5th_1').value = teams.ZonaNorte[2].name; // 3rd ZN
+                document.getElementById('team5th_2').value = teams.ZonaSur[2].name;  // 3rd ZS
+
+                // Semifinal 1: 1° Zona Sur vs 2° Zona Norte
+                document.getElementById('semifinal1_team1').value = teams.ZonaSur[0].name; // 1st ZS
+                document.getElementById('semifinal1_team2').value = teams.ZonaNorte[1].name; // 2nd ZN
+
+                // Semifinal 2: 1° Zona Norte vs 2° Zona Sur
+                document.getElementById('semifinal2_team1').value = teams.ZonaNorte[0].name; // 1st ZN
+                document.getElementById('semifinal2_team2').value = teams.ZonaSur[1].name;  // 2nd ZS
+            } else {
+                 // Reset if not enough teams
+                document.getElementById('team5th_1').value = '';
+                document.getElementById('team5th_2').value = '';
+                document.getElementById('semifinal1_team1').value = '';
+                document.getElementById('semifinal1_team2').value = '';
+                document.getElementById('semifinal2_team1').value = '';
+                document.getElementById('semifinal2_team2').value = '';
+            }
+        }
+
+        /**
+         * Updates the knockout stage matches (Final, 3rd/4th place) based on semifinal results.
+         * @param {string} matchId - Identifier for the match ('semifinal1', 'semifinal2', '5th6th').
+         */
+        function updateKnockoutMatch(matchId) {
+            let team1Input, score1Input, team2Input, score2Input;
+            let winner = '';
+            let loser = '';
+
+            switch (matchId) {
+                case 'semifinal1':
+                    team1Input = document.getElementById('semifinal1_team1');
+                    score1Input = document.getElementById('semifinal1_score1');
+                    team2Input = document.getElementById('semifinal1_team2');
+                    score2Input = document.getElementById('semifinal1_score2');
+                    break;
+                case 'semifinal2':
+                    team1Input = document.getElementById('semifinal2_team1');
+                    score1Input = document.getElementById('semifinal2_score1');
+                    team2Input = document.getElementById('semifinal2_team2');
+                    score2Input = document.getElementById('semifinal2_score2');
+                    break;
+                case '5th6th':
+                    // For 5th/6th place, we just need the winner/loser, no further propagation in this simplified fixture.
+                    // The inputs are already for the 5th/6th place teams.
+                    team1Input = document.getElementById('team5th_1');
+                    score1Input = document.getElementById('score5th_1');
+                    team2Input = document.getElementById('team5th_2');
+                    score2Input = document.getElementById('score5th_2');
+                    break;
+                default:
+                    return;
+            }
+
+            const score1 = parseInt(score1Input.value);
+            const score2 = parseInt(score2Input.value);
+
+            if (!isNaN(score1) && !isNaN(score2)) {
+                if (score1 > score2) {
+                    winner = team1Input.value;
+                    loser = team2Input.value;
+                } else if (score2 > score1) {
+                    winner = team2Input.value;
+                    loser = team1Input.value;
+                } else {
+                    // Handle ties if necessary (e.g., in basketball, usually there are no ties, overtime played)
+                    // For simplicity here, if scores are equal, we don't propagate yet.
+                    winner = '';
+                    loser = '';
+                }
+            } else {
+                // If scores are not valid, clear winner/loser for this match
+                winner = '';
+                loser = '';
+            }
+
+            // Propagate winners to Final and losers to 3rd Place match
+            if (matchId === 'semifinal1') {
+                document.getElementById('final_team1').value = winner;
+                document.getElementById('thirdPlace_team1').value = loser;
+            } else if (matchId === 'semifinal2') {
+                document.getElementById('final_team2').value = winner;
+                document.getElementById('thirdPlace_team2').value = loser;
+            }
+        }
+    </script>
+</body>
+</html>
